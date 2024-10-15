@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Atto\Hydrator\Template\Extract;
 
-use Atto\Hydrator\Attribute\SerializationStrategyType;
-
 final class StringWrapper
 {
-    const EXTRACT_FORMAT = '(string) %s';
+    private const EXTRACT_FORMAT = '(string) %s';
+    private const EXTRACT_FORMAT_WITH_NULL = '%1$s !== null ? (string) %s : null';
 
     use BasicExtract;
 }
