@@ -65,6 +65,8 @@ final class FunctionalTest extends TestCase
             Arrays\Flat\Scalars::class,
             Arrays\Nested\Scalars::class,
             Objects\Flat\DateTimes::class,
+            Objects\Flat\StringBackedEnums::class,
+            Objects\Flat\StringWrappers::class,
             Objects\Nested\Default\Strings::class,
             Objects\Nested\Merge\Strings::class,
             Objects\Nested\Nest\Strings::class,
