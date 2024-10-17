@@ -85,7 +85,13 @@ final class Builder
                 )
             );
             $extractCode->addPropertyAccessor(
-                $this->extractFor($typeName, $propertyName, $hydrationStrategy, $serialisationStrategy)
+                $this->extractFor(
+                    $typeName,
+                    $propertyName,
+                    $hydrationStrategy,
+                    $serialisationStrategy,
+                    $property->hasType() && ! ($property->hasDefaultValue() || $property->getType()->allowsNull())
+                )
             );
 
             if ($hydrationStrategy->requiresSubHydrator()) {
@@ -162,9 +168,24 @@ final class Builder
     ): string|\Stringable {
         return match ($hydrationStrategy) {
             HydrationStrategyType::Primitive => new Template\Hydrate\Primitive($propertyName, $serialisationStrategy, $needsChecks),
-            HydrationStrategyType::Enum => new Template\Hydrate\Enum($propertyName, $serialisationStrategy, $typeName),
-            HydrationStrategyType::DateTime => new Template\Hydrate\DateTime($propertyName, $serialisationStrategy, $typeName),
-            HydrationStrategyType::String => new Template\Hydrate\StringWrapper($propertyName, $serialisationStrategy, $typeName),
+            HydrationStrategyType::Enum => new Template\Hydrate\Enum(
+                $propertyName,
+                $serialisationStrategy,
+                $typeName,
+                $needsChecks,
+            ),
+            HydrationStrategyType::DateTime => new Template\Hydrate\DateTime(
+                $propertyName,
+                $serialisationStrategy,
+                $typeName,
+                $needsChecks
+            ),
+            HydrationStrategyType::String => new Template\Hydrate\StringWrapper(
+                $propertyName,
+                $serialisationStrategy,
+                $typeName,
+                $needsChecks,
+            ),
             HydrationStrategyType::Nest => new Template\Hydrate\Nest($propertyName,$serialisationStrategy, $typeName),
             HydrationStrategyType::Json => new Template\Hydrate\Json($propertyName, $typeName),
             HydrationStrategyType::Merge => new Template\Hydrate\Merge($propertyName, $typeName),
@@ -177,12 +198,25 @@ final class Builder
         string|\Stringable $propertyName,
         HydrationStrategyType $hydrationStrategy,
         ?SerializationStrategyType $serialisationStrategy,
+        bool $needsChecks,
     ): string|\Stringable {
         return match ($hydrationStrategy) {
             HydrationStrategyType::Primitive => new Template\Extract\Primitive($propertyName, $serialisationStrategy),
-            HydrationStrategyType::Enum => new Template\Extract\Enum($propertyName, $serialisationStrategy),
-            HydrationStrategyType::DateTime => new Template\Extract\DateTime($propertyName, $serialisationStrategy),
-            HydrationStrategyType::String => new Template\Extract\StringWrapper($propertyName, $serialisationStrategy),
+            HydrationStrategyType::Enum => new Template\Extract\Enum(
+                $propertyName,
+                $serialisationStrategy,
+                $needsChecks
+            ),
+            HydrationStrategyType::DateTime => new Template\Extract\DateTime(
+                $propertyName,
+                $serialisationStrategy,
+                $needsChecks
+            ),
+            HydrationStrategyType::String => new Template\Extract\StringWrapper(
+                $propertyName,
+                $serialisationStrategy,
+                $needsChecks,
+            ),
             HydrationStrategyType::Nest => new Template\Extract\Nest($propertyName, $typeName, $serialisationStrategy),
             HydrationStrategyType::Json => new Template\Extract\Json($propertyName, $typeName),
             HydrationStrategyType::Merge => new Template\Extract\Merge($propertyName, $typeName),

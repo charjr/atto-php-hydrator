@@ -19,7 +19,8 @@ trait BasicExtract
 
     public function __construct(
         private readonly string $propertyName,
-        private readonly ?SerializationStrategyType $serialisationStrategy = null
+        private readonly ?SerializationStrategyType $serialisationStrategy = null,
+        private readonly bool $needsChecks,
     ) {
         $this->valueReference = new ObjectReference($this->propertyName);
     }
@@ -30,7 +31,12 @@ trait BasicExtract
             return sprintf(
                 self::ASSIGNMENT,
                 $this->propertyName,
-                sprintf(self::EXTRACT_FORMAT, $this->valueReference)
+                sprintf(
+                    $this->needsChecks ?
+                        self::EXTRACT_FORMAT :
+                        self::EXTRACT_FORMAT_WITH_NULL,
+                    $this->valueReference
+                )
             );
         }
 
