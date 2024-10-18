@@ -10,14 +10,23 @@ use Atto\Hydrator\Template\ObjectReference;
 
 final class Enum
 {
-    private const HYDRATE_FORMAT = '\%2$s::tryFrom(%1$s)';
+    private const HYDRATE_FORMAT = '\\%2$s::from(%1$s)';
+    private const HYDRATE_FORMAT_WITH_NULL = '%1$s === null ? null : \\%2$s::from(%1$s)';
 
     private const DESERIALISE = [
         SerializationStrategyType::Json->value => 'array_map(fn($value) => %s, json_decode(%s, true))',
-        SerializationStrategyType::CommaDelimited->value => 'array_map(fn($value) => %s, explode(\',\', %s))'
+        SerializationStrategyType::CommaDelimited->value => 'array_map(fn($value) => %s, explode(\',\', %s))',
+        SerializationStrategyType::PipeDelimited->value => 'array_map(fn($value) => %s, explode(\'|\', %s))',
+    ];
+    private const DESERIALISE_WITH_NULL = [
+        SerializationStrategyType::Json->value => 'array_map(fn($value) => %s, json_decode(%s ?? \'null\', true))',
+        SerializationStrategyType::CommaDelimited->value => 'isset(%2$s) ? array_map(fn($value) => %1$s, explode(\',\', %2$s)): null',
+        SerializationStrategyType::PipeDelimited->value => 'isset(%2$s) ? array_map(fn($value) => %1$s, explode(\'|\', %2$s)): null',
     ];
 
     private const ASSIGNMENT = '%s = %s;';
+    private const ASSIGNMENT_WITH_NULL = '%s = %s ?? null;';
+
     private const CHECKS = <<<'EOF'
         if (
             isset(%1$s) ||
@@ -34,7 +43,8 @@ final class Enum
     public function __construct(
         private readonly string|\Stringable $propertyName,
         private readonly ?SerializationStrategyType $serializationStrategy,
-        private readonly string $className
+        private readonly string $className,
+        private readonly bool $needsChecks,
     ) {
         $this->arrayReference = new ArrayReference($this->propertyName);
         $this->objectReference = new ObjectReference($this->propertyName);
@@ -44,28 +54,43 @@ final class Enum
     {
         if ($this->serializationStrategy === null) {
             $assignment = sprintf(
-                self::ASSIGNMENT,
+                $this->needsChecks ? self::ASSIGNMENT : self::ASSIGNMENT_WITH_NULL,
                 $this->objectReference,
-                sprintf(self::HYDRATE_FORMAT, $this->arrayReference, $this->className)
+                sprintf(
+                    $this->needsChecks ?
+                        self::HYDRATE_FORMAT :
+                        self::HYDRATE_FORMAT_WITH_NULL,
+                    $this->arrayReference,
+                    $this->className
+                ),
             );
         } else {
             $assignment = sprintf(
-                self::ASSIGNMENT,
+                $this->needsChecks ? self::ASSIGNMENT : self::ASSIGNMENT_WITH_NULL,
                 $this->objectReference,
                 sprintf(
-                    self::DESERIALISE[$this->serializationStrategy->value],
-                    sprintf(self::HYDRATE_FORMAT, '$value', $this->className),
+                    $this->needsChecks ?
+                        self::DESERIALISE[$this->serializationStrategy->value] :
+                        self::DESERIALISE_WITH_NULL[$this->serializationStrategy->value],
+                    sprintf(
+                        $this->needsChecks ?
+                            self::HYDRATE_FORMAT :
+                            self::HYDRATE_FORMAT_WITH_NULL,
+                        '$value',
+                        $this->className,
+                    ),
                     $this->arrayReference
                 ));
         }
 
-        return
+        return $this->needsChecks ?
             sprintf(
                 self::CHECKS,
                 $this->arrayReference,
                 $this->objectReference,
                 $this->propertyName,
                 $assignment
-            );
+            ) :
+            $assignment;
     }
 }

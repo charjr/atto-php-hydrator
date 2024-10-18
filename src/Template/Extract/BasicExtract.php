@@ -11,7 +11,8 @@ trait BasicExtract
 {
     const SERIALISE = [
         SerializationStrategyType::Json->value => 'json_encode(array_map(fn($value) => %s, %s))',
-        SerializationStrategyType::CommaDelimited->value => 'implode(\',\', array_map(fn($value) => %s, %s))'
+        SerializationStrategyType::CommaDelimited->value => 'implode(\',\', array_map(fn($value) => %s, %s))',
+        SerializationStrategyType::PipeDelimited->value => 'implode(\'|\', array_map(fn($value) => %s, %s))',
     ];
     const ASSIGNMENT = '$values[\'%1$s\'] = %2$s;' . "\n";
 
@@ -19,7 +20,8 @@ trait BasicExtract
 
     public function __construct(
         private readonly string $propertyName,
-        private readonly ?SerializationStrategyType $serialisationStrategy = null
+        private readonly ?SerializationStrategyType $serialisationStrategy,
+        private readonly bool $needsChecks,
     ) {
         $this->valueReference = new ObjectReference($this->propertyName);
     }
@@ -30,7 +32,12 @@ trait BasicExtract
             return sprintf(
                 self::ASSIGNMENT,
                 $this->propertyName,
-                sprintf(self::EXTRACT_FORMAT, $this->valueReference)
+                sprintf(
+                    $this->needsChecks ?
+                        self::EXTRACT_FORMAT :
+                        self::EXTRACT_FORMAT_WITH_NULL,
+                    $this->valueReference
+                )
             );
         }
 

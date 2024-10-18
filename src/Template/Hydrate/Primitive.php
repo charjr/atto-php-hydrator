@@ -22,6 +22,7 @@ final class Primitive
         SerializationStrategyType::CommaDelimited->value => 'is_null(%1$s) ? null :  explode(\',\', %1$s)',
         SerializationStrategyType::PipeDelimited->value => 'is_null(%1$s) ? null :  explode(\'|\', %1$s)',
     ];
+
     private const ASSIGNMENT = '%s = %s;';
     private const ASSIGNMENT_WITH_NULL = '%s = %s ?? null;';
 
