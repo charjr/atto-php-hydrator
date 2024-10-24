@@ -8,6 +8,7 @@ use Atto\Hydrator\Attribute\SerializationStrategy;
 use Atto\Hydrator\Attribute\SerializationStrategyType;
 use Atto\Hydrator\Attribute\Subtype;
 use Atto\Hydrator\Builder;
+use Atto\Hydrator\Exception\AttributeMissing;
 use Atto\Hydrator\Exception\AttributeNotApplicable;
 use Atto\Hydrator\Exception\TypeHintException;
 use Atto\Hydrator\TestFixtures\Mocks\Enums\StringDummy;
@@ -17,6 +18,7 @@ use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(Builder::class)]
+#[CoversClass(AttributeMissing::class)]
 #[CoversClass(AttributeNotApplicable::class)]
 #[CoversClass(TypeHintException::class)]
 #[UsesClass(\Atto\Hydrator\Attribute\Subtype::class)]
@@ -54,6 +56,17 @@ final class BuilderTest extends \PHPUnit\Framework\TestCase
         $sut = new Builder();
 
         self::expectExceptionObject(TypeHintException::unsupported('intersection'));
+
+        $sut->build($objectWithMissingTypeHint::class);
+    }
+
+    #[Test]
+    public function iThrowsOnArraysMissingSubtypes(): void
+    {
+        $objectWithMissingTypeHint = new class () {private array $ambiguousSubtype;};
+        $sut = new Builder();
+
+        self::expectExceptionObject(AttributeMissing::subtype('array', 'ambiguousSubtype'));
 
         $sut->build($objectWithMissingTypeHint::class);
     }
