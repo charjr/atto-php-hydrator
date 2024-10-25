@@ -50,12 +50,12 @@ final class Builder
             $serialisationStrategy = null;
 
             if ($typeName === 'array') {
-                $this->getSubtype($property) ??
+                $typeName = $this->getSubtype($property) ??
                     throw AttributeMissing::subtype($typeName, $propertyName);
 
                 $serialisationStrategy = $this->getSerialisationStrategy($property);
                 $hydrationStrategy = $this->getHydrationStrategy($property) ??
-                    $this->typeNameToHydrationStrategy($this->getSubtype($property))
+                    $this->typeNameToHydrationStrategy($typeName)
                 ;
 
                 if ($hydrationStrategy === HydrationStrategyType::Json) {
