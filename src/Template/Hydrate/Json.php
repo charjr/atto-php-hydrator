@@ -23,7 +23,7 @@ final class Json
 
     public function __toString(): string
     {
-        $format = 'if (isset(%1$s)) {%2$s = %3$s;}';
+        $format = 'if (isset(%1$s)) { $data = json_decode(%3$s, true); %2$s = $hydrate[\%4$s::class]($data);}';
         if ($this->nullable) {
             $format .= 'else {%2$s = null;}';
         }
@@ -32,17 +32,8 @@ final class Json
             $format,
             $this->arrayReference,
             $this->objectReference,
-            $this->getHydrationFormat((string) $this->arrayReference)
-        );
-    }
-
-    private function getHydrationFormat(string $valueReference): string
-    {
-        return sprintf(
-            '$hydrate[\%2$s::class](json_decode(%3$s, true));',
-            $this->objectReference,
+            (string) $this->arrayReference,
             $this->className,
-            $valueReference,
         );
     }
 }
